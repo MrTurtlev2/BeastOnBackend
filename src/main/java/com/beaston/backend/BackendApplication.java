@@ -11,3 +11,7 @@ public class BackendApplication {
 	}
 
 }
+
+// mam aplikację w springu i bedę używał dockera, a takze dla testów bazy postgresowej.
+//
+//flow aplikacji bedzie takie że użytkowicy bedą
