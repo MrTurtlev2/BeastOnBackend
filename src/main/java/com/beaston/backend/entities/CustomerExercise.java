@@ -3,20 +3,20 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "user_exercises")
+@Table(name = "customers_exercises")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class UserExercise {
+public class CustomerExercise {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "customer_id", nullable = false)
+    private Customer customer;
 
     @ManyToOne
     @JoinColumn(name = "exercise_id", nullable = false)

@@ -19,8 +19,8 @@ public class TrainingPlanExercise {
     private TrainingPlan trainingPlan;
 
     @ManyToOne
-    @JoinColumn(name = "user_exercise_id", nullable = false)
-    private UserExercise userExercise;
+    @JoinColumn(name = "customer_exercise_id", nullable = false)
+    private CustomerExercise customerExercise;
 
     private Integer orderIndex;
 }
