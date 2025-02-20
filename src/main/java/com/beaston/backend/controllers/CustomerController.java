@@ -1,4 +1,5 @@
 package com.beaston.backend.controllers;
+import com.beaston.backend.DTO.LoginDto;
 import com.beaston.backend.DTO.RegisterDto;
 import com.beaston.backend.entities.Customer;
 import com.beaston.backend.repositories.CustomerRepository;
@@ -7,6 +8,8 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.*;
@@ -31,6 +34,9 @@ public class CustomerController {
 
     @Autowired
     CustomerRepository customerRepository;
+
+    @Autowired
+    AuthenticationManager authenticationManager;
 
     @PostMapping("/register")
     public ResponseEntity<Object> register(
@@ -81,6 +87,40 @@ public class CustomerController {
         return ResponseEntity.badRequest().body("Error");
     }
 
+    @PostMapping("/login")
+    public ResponseEntity<Object> login(@RequestBody LoginDto loginDto, BindingResult result) {
+        if (result.hasErrors()) {
+            var errorList = result.getAllErrors();
+            var errorsMap = new HashMap<String, String>();
+
+            for (int i = 0; i < errorList.size(); i++) {
+                var error = (FieldError) errorList.get(i);
+                errorsMap.put(error.getField(), error.getDefaultMessage());
+            }
+            return ResponseEntity.badRequest().body(errorsMap);
+        }
+
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            loginDto.getCustomerName(),
+                            loginDto.getPassword()
+                    )
+            );
+            Customer customer = customerRepository.findByCustomerName(loginDto.getCustomerName());
+            String jwtToken = createJwtToken(customer);
+            var response = new HashMap<String, Object>();
+            response.put("token", jwtToken);
+            response.put("user", customer);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception ex) {
+            System.out.println("exeption: ");
+            ex.printStackTrace();
+        }
+        return ResponseEntity.badRequest().body("Error");
+    }
 
     private String createJwtToken(Customer customer) {
         Instant now = Instant.now();
