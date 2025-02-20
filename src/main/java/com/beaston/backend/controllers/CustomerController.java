@@ -66,7 +66,12 @@ public class CustomerController {
                 return ResponseEntity.badRequest().body("User with this email already exists");
             }
             customerRepository.save(customer);
-            return ResponseEntity.ok("user added");
+            String jwtToken  = createJwtToken(customer);
+            var response = new HashMap<String, Object>();
+            response.put("token", jwtToken);
+            response.put("user", customer);
+
+            return ResponseEntity.ok(response);
 
         } catch (Exception e) {
             System.out.println("Exeption");
