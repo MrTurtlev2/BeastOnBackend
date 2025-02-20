@@ -5,6 +5,7 @@ import com.beaston.backend.entities.Customer;
 import com.beaston.backend.repositories.CustomerRepository;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jwt.JWTClaimsSet;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -40,7 +41,7 @@ public class CustomerController {
 
     @PostMapping("/register")
     public ResponseEntity<Object> register(
-            @RequestBody RegisterDto registerDto,
+           @Valid @RequestBody RegisterDto registerDto,
             BindingResult result) {
 
         if (result.hasErrors()) {
