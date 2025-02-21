@@ -97,24 +97,28 @@ public class CustomerController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.out.println("Exeption");
-            e.printStackTrace();
+            ApiErrorResponseDto response = new ApiErrorResponseDto(
+                    "Błąd serwera przy rejestracji",
+                    ErrorTypeEnum.SERVER_ERROR,
+                    HttpStatus.INTERNAL_SERVER_ERROR.value()
+            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-
-        return ResponseEntity.badRequest().body("Error");
     }
 
     @PostMapping("/login")
     public ResponseEntity<Object> login(@RequestBody LoginDto loginDto, BindingResult result) {
         if (result.hasErrors()) {
-            var errorList = result.getAllErrors();
-            var errorsMap = new HashMap<String, String>();
+            String errorMessage = result.getFieldErrors().stream()
+                    .map(FieldError::getDefaultMessage)
+                    .collect(Collectors.joining(";"));
 
-            for (int i = 0; i < errorList.size(); i++) {
-                var error = (FieldError) errorList.get(i);
-                errorsMap.put(error.getField(), error.getDefaultMessage());
-            }
-            return ResponseEntity.badRequest().body(errorsMap);
+            ApiErrorResponseDto response = new ApiErrorResponseDto(
+                    errorMessage,
+                    ErrorTypeEnum.VALIDATION_PROBLEM,
+                    HttpStatus.BAD_REQUEST.value()
+            );
+            return ResponseEntity.badRequest().body(response);
         }
 
         try {
@@ -133,10 +137,13 @@ public class CustomerController {
             return ResponseEntity.ok(response);
 
         } catch (Exception ex) {
-            System.out.println("exeption: ");
-            ex.printStackTrace();
+            ApiErrorResponseDto response = new ApiErrorResponseDto(
+                    "Błąd serwera przy logowaniu",
+                    ErrorTypeEnum.SERVER_ERROR,
+                    HttpStatus.INTERNAL_SERVER_ERROR.value()
+            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-        return ResponseEntity.badRequest().body("Error");
     }
 
     private String createJwtToken(Customer customer) {
@@ -155,32 +162,4 @@ public class CustomerController {
                 JwsHeader.with(MacAlgorithm.HS256).build(), claims);
         return encoder.encode(params).getTokenValue();
     }
-
-//    private String createJwtToken(Customer customer) {
-//        Instant now = Instant.now();
-//
-//        JWTClaimsSet claims = JWTClaimsSet.builder()
-//                .issiuer(jwtIssuer)
-//                .issiuedAt(now)
-//                .expiresAt(now.plusSeconds(24 * 3600))
-//                .subject(customer.getUsername())
-//                .claim("role", customer.getRole())
-//                .build();
-//
-//        var encoder = new NimbusJwtEncoder(
-//                new ImmutableSecret<>(jwtSecretKey.getBytes()));
-//        var params = JwtEncoderParameters.from(
-//                JwsHeader.with(MacAlgorithm.HS256).build(), claims);
-//        return encoder.encode(params).getTokenValue();
-//    }
-
-//    @PostMapping("/register")
-//    public String registerUser(@RequestBody UserRegistrationDto authRequest) {
-//       return "it worked";
-//    }
-//    @PostMapping("/register2")
-//    public String registerUser2(@RequestBody UserRegistrationDto authRequest) {
-//        return "it worked2";
-//    }
-
 }
