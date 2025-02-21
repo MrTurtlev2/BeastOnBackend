@@ -1,13 +1,16 @@
 package com.beaston.backend.controllers;
+import com.beaston.backend.DTO.ApiErrorResponseDto;
 import com.beaston.backend.DTO.LoginDto;
 import com.beaston.backend.DTO.RegisterDto;
 import com.beaston.backend.entities.Customer;
+import com.beaston.backend.enums.ErrorTypeEnum;
 import com.beaston.backend.repositories.CustomerRepository;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jwt.JWTClaimsSet;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/users")
@@ -45,14 +49,16 @@ public class CustomerController {
             BindingResult result) {
 
         if (result.hasErrors()) {
-            var errorList = result.getAllErrors();
-            var errorsMap = new HashMap<String, String>();
+            String errorMessage = result.getFieldErrors().stream()
+                    .map(FieldError::getDefaultMessage)
+                    .collect(Collectors.joining(";"));
 
-            for (int i = 0; i < errorList.size(); i++) {
-                var error = (FieldError) errorList.get(i);
-                errorsMap.put(error.getField(), error.getDefaultMessage());
-            }
-            return ResponseEntity.badRequest().body(errorsMap);
+            ApiErrorResponseDto response = new ApiErrorResponseDto(
+                    errorMessage,
+                    ErrorTypeEnum.VALIDATION_PROBLEM,
+                    HttpStatus.BAD_REQUEST.value()
+            );
+            return ResponseEntity.badRequest().body(response);
         }
 
         var bCryptEncoder = new BCryptPasswordEncoder();
@@ -66,11 +72,21 @@ public class CustomerController {
         try {
             var otherUser = customerRepository.findByCustomerName(registerDto.getCustomerName());
             if (otherUser != null) {
-                return ResponseEntity.badRequest().body("User with this name already exists");
+                ApiErrorResponseDto response = new ApiErrorResponseDto(
+                        "Użytkownik o podanym loginie już istnieje",
+                        ErrorTypeEnum.BUSINESS_ERROR,
+                        HttpStatus.BAD_REQUEST.value()
+                );
+                return ResponseEntity.badRequest().body(response);
             }
             var otherUserEmail = customerRepository.findByEmail(registerDto.getEmail());
             if (otherUserEmail != null) {
-                return ResponseEntity.badRequest().body("User with this email already exists");
+                ApiErrorResponseDto response = new ApiErrorResponseDto(
+                        "Użytkownik o podanym e-mail już istnieje",
+                        ErrorTypeEnum.BUSINESS_ERROR,
+                        HttpStatus.BAD_REQUEST.value()
+                );
+                return ResponseEntity.badRequest().body(response);
             }
             customerRepository.save(customer);
             String jwtToken  = createJwtToken(customer);
