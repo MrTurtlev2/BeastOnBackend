@@ -1,4 +1,5 @@
 package com.beaston.backend.entities;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -24,4 +25,3 @@ public class TrainingPlanExercise {
 
     private Integer orderIndex;
 }
-

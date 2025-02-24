@@ -1,4 +1,6 @@
 package com.beaston.backend.entities;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -16,6 +18,7 @@ public class TrainingSchedule {
 
     @ManyToOne
     @JoinColumn(name = "training_plan_id", nullable = false)
+    @JsonIgnore
     private TrainingPlan trainingPlan;
 
     @Column(nullable = false)
