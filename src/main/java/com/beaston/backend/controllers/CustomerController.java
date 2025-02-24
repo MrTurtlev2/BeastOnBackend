@@ -1,7 +1,7 @@
 package com.beaston.backend.controllers;
 
 
-import com.beaston.backend.DTO.ApiErrorResponseDto;
+import com.beaston.backend.DTO.api.ApiErrorResponseDto;
 import com.beaston.backend.DTO.user.UserDetailsDto;
 import com.beaston.backend.entities.Customer;
 import com.beaston.backend.enums.ErrorTypeEnum;
@@ -46,7 +46,7 @@ public class CustomerController {
                 customer.getEmail(),
                 customer.getRole()
         );
- 
+
         return ResponseEntity.ok(customerDetails);
     }
 

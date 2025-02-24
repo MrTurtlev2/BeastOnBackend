@@ -1,7 +1,8 @@
 package com.beaston.backend.controllers;
-import com.beaston.backend.DTO.ApiErrorResponseDto;
-import com.beaston.backend.DTO.LoginDto;
-import com.beaston.backend.DTO.RegisterDto;
+
+import com.beaston.backend.DTO.api.ApiErrorResponseDto;
+import com.beaston.backend.DTO.auth.LoginDto;
+import com.beaston.backend.DTO.auth.RegisterDto;
 import com.beaston.backend.entities.Customer;
 import com.beaston.backend.enums.ErrorTypeEnum;
 import com.beaston.backend.repositories.CustomerRepository;
@@ -15,10 +16,16 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
-import org.springframework.security.oauth2.jwt.*;
+import org.springframework.security.oauth2.jwt.JwsHeader;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -28,22 +35,18 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/auth")
 public class AuthController {
 
+    @Autowired
+    CustomerRepository customerRepository;
+    @Autowired
+    AuthenticationManager authenticationManager;
     @Value("${security.jwt.secret-key}")
     private String jwtSecretKey;
-
     @Value("${security.jwt.secret-key}")
     private String jwtIssuer;
 
-
-    @Autowired
-    CustomerRepository customerRepository;
-
-    @Autowired
-    AuthenticationManager authenticationManager;
-
     @PostMapping("/register")
     public ResponseEntity<Object> register(
-           @Valid @RequestBody RegisterDto registerDto,
+            @Valid @RequestBody RegisterDto registerDto,
             BindingResult result) {
 
         if (result.hasErrors()) {
@@ -87,7 +90,7 @@ public class AuthController {
                 return ResponseEntity.badRequest().body(response);
             }
             customerRepository.save(customer);
-            String jwtToken  = createJwtToken(customer);
+            String jwtToken = createJwtToken(customer);
             var response = new HashMap<String, Object>();
             response.put("token", jwtToken);
             response.put("user", customer);

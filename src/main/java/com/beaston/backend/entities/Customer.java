@@ -1,4 +1,6 @@
 package com.beaston.backend.entities;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -23,6 +25,7 @@ public class Customer {
     @Column(nullable = false)
     private String role;
 
+    @JsonIgnore
     @Column(nullable = false)
     private String passwordHash;
 }

@@ -1,4 +1,5 @@
-package com.beaston.backend.DTO;
+package com.beaston.backend.DTO.auth;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

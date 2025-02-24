@@ -1,14 +1,14 @@
 package com.beaston.backend;
 
-import com.beaston.backend.DTO.ApiErrorResponseDto;
+import com.beaston.backend.DTO.api.ApiErrorResponseDto;
 import com.beaston.backend.enums.ErrorTypeEnum;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.security.access.AccessDeniedException;
 
 import java.util.List;
 import java.util.stream.Collectors;

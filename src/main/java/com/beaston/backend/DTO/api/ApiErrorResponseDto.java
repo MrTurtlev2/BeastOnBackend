@@ -1,4 +1,4 @@
-package com.beaston.backend.DTO;
+package com.beaston.backend.DTO.api;
 
 import com.beaston.backend.enums.ErrorTypeEnum;
 import lombok.AllArgsConstructor;

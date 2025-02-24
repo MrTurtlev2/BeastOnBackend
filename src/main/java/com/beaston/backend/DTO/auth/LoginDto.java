@@ -1,4 +1,4 @@
-package com.beaston.backend.DTO;
+package com.beaston.backend.DTO.auth;
 
 import lombok.Getter;
 import lombok.Setter;
