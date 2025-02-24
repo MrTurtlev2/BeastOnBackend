@@ -1,6 +1,8 @@
 package com.beaston.backend.services;
 
 import com.beaston.backend.DTO.TrainingPlanDTO;
+import com.beaston.backend.DTO.TrainingPlanResponseDTO;
+import com.beaston.backend.DTO.TrainingScheduleDTO;
 import com.beaston.backend.entities.Customer;
 import com.beaston.backend.entities.TrainingPlan;
 import com.beaston.backend.entities.TrainingSchedule;
@@ -8,6 +10,9 @@ import com.beaston.backend.repositories.CustomerRepository;
 import com.beaston.backend.repositories.TrainingPlanRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class TrainingPlanService {
@@ -41,6 +46,30 @@ public class TrainingPlanService {
 
         return savedTrainingPlan;
     }
+
+    public List<TrainingPlanResponseDTO> getTrainingPlansByCustomerId(Long customerId) {
+        List<TrainingPlan> trainingPlans = trainingPlanRepository.findByCustomerId(customerId);
+        return trainingPlans.stream().map(this::convertToDTO).collect(Collectors.toList());
+    }
+
+    private TrainingPlanResponseDTO convertToDTO(TrainingPlan trainingPlan) {
+        TrainingPlanResponseDTO response = new TrainingPlanResponseDTO();
+        response.setId(trainingPlan.getId());
+        response.setName(trainingPlan.getName());
+
+        List<TrainingScheduleDTO> scheduleDTOs = trainingPlan.getTrainingSchedules().stream()
+                .map(schedule -> {
+                    TrainingScheduleDTO dto = new TrainingScheduleDTO();
+                    dto.setId(schedule.getId());
+                    dto.setDayOfWeek(schedule.getDayOfWeek());
+                    return dto;
+                }).collect(Collectors.toList());
+
+        response.setTrainingSchedules(scheduleDTOs);
+        return response;
+    }
+
+
 }
 
 

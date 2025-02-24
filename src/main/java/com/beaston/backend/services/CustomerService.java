@@ -9,6 +9,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.security.Principal;
+
 @Service
 public class CustomerService implements UserDetailsService {
 
@@ -29,5 +31,14 @@ public class CustomerService implements UserDetailsService {
         }
 
         return null;
+    }
+
+    public Long getAuthenticatedCustomerId(Principal principal) {
+        String username = principal.getName();
+        Customer customer = customerRepository.findByCustomerName(username);
+        if (customer == null) {
+            throw new UsernameNotFoundException("User not found");
+        }
+        return customer.getId();
     }
 }
