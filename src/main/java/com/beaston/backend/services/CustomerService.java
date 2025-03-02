@@ -3,13 +3,14 @@ package com.beaston.backend.services;
 import com.beaston.backend.entities.Customer;
 import com.beaston.backend.repositories.CustomerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
-
-import java.security.Principal;
 
 @Service
 public class CustomerService implements UserDetailsService {
@@ -33,12 +34,12 @@ public class CustomerService implements UserDetailsService {
         return null;
     }
 
-    public Long getAuthenticatedCustomerId(Principal principal) {
-        String username = principal.getName();
-        Customer customer = customerRepository.findByCustomerName(username);
-        if (customer == null) {
-            throw new UsernameNotFoundException("User not found");
+    public Long getAuthenticatedCustomerId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication.getPrincipal() instanceof Jwt jwt) {
+            return jwt.getClaim("id");
         }
-        return customer.getId();
+        throw new IllegalStateException("Brak uwierzytelnienia");
     }
 }

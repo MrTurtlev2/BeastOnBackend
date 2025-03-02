@@ -155,6 +155,7 @@ public class AuthController {
                 .issuer(jwtIssuer)
                 .expiresAt(now.plusSeconds(24 * 3600))
                 .subject(customer.getCustomerName())
+                .claim("id", customer.getId())
                 .claim("role", customer.getRole())
                 .build();
 
