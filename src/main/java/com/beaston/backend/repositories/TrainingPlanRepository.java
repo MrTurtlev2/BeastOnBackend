@@ -10,5 +10,6 @@ public interface TrainingPlanRepository extends JpaRepository<TrainingPlan, Long
     List<TrainingPlan> findByCustomer(Customer customer);
 
     List<TrainingPlan> findByCustomerId(Long customerId);
+
 }
 
