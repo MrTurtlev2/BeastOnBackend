@@ -3,20 +3,24 @@ package com.beaston.backend.services;
 import com.beaston.backend.DTO.TrainingPlanDTO;
 import com.beaston.backend.DTO.TrainingPlanResponseDTO;
 import com.beaston.backend.DTO.TrainingScheduleDTO;
-import com.beaston.backend.entities.*;
+import com.beaston.backend.entities.Customer;
+import com.beaston.backend.entities.TrainingPlan;
+import com.beaston.backend.entities.TrainingSchedule;
 import com.beaston.backend.repositories.CustomerExerciseRepository;
 import com.beaston.backend.repositories.CustomerRepository;
+import com.beaston.backend.repositories.ExerciseRepository;
 import com.beaston.backend.repositories.TrainingPlanRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class TrainingPlanService {
+
+    private final CustomerService customerService;
+
     @Autowired
     private TrainingPlanRepository trainingPlanRepository;
 
@@ -25,6 +29,13 @@ public class TrainingPlanService {
 
     @Autowired
     private CustomerExerciseRepository customerExerciseRepository;
+
+    @Autowired
+    private ExerciseRepository exerciseRepository;
+
+    public TrainingPlanService(CustomerService customerService) {
+        this.customerService = customerService;
+    }
 
     public TrainingPlan addTrainingPlan(Long customerId, TrainingPlanDTO trainingPlanDTO) {
         Customer customer = customerRepository.findById(customerId)
@@ -74,29 +85,36 @@ public class TrainingPlanService {
     }
 
 
-    public void assignExerciseToTrainingPlan(Long planId, Long exerciseId) {
-        // Pobierz plan treningowy
-        TrainingPlan trainingPlan = trainingPlanRepository.findById(planId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Plan treningowy nie znaleziony"));
+    public void assignExerciseToTrainingPlan(Long planId, Long exerciseId, Long customerId) {
 
-        // Pobierz ćwiczenie przypisane do użytkownika
-        CustomerExercise customerExercise = customerExerciseRepository.findById(exerciseId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ćwiczenie użytkownika nie znalezione"));
-
-        // Oblicz orderIndex na podstawie już przypisanych ćwiczeń do planu
-        int orderIndex = trainingPlan.getTrainingPlanExercises().size() + 1; // Automatycznie inkrementuje orderIndex
-
-        // Utwórz nowy obiekt TrainingPlanExercise
-        TrainingPlanExercise trainingPlanExercise = new TrainingPlanExercise();
-        trainingPlanExercise.setTrainingPlan(trainingPlan);
-        trainingPlanExercise.setCustomerExercise(customerExercise);
-        trainingPlanExercise.setOrderIndex(orderIndex);
-
-        // Dodaj ćwiczenie do planu treningowego
-        trainingPlan.getTrainingPlanExercises().add(trainingPlanExercise); // Dodaj do listy ćwiczeń w planie
-
-        // Zaktualizuj plan treningowy
-        trainingPlanRepository.save(trainingPlan);
+//        // Pobierz plan treningowy
+//        TrainingPlan trainingPlan = trainingPlanRepository.findById(planId)
+//                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Plan treningowy nie znaleziony"));
+//
+//        // Pobierz globalne ćwiczenie
+//        Exercise exercise = exerciseRepository.findById(exerciseId)
+//                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ćwiczenie nie znalezione"));
+//
+//        // Stwórz CustomerExercise dla użytkownika
+//        CustomerExercise customerExercise1 = new CustomerExercise();
+//        customerExercise1.setCustomerId(customerId);
+//        customerExercise.setExercise(exercise);
+//        customerExercise.setWeight(0.0); // Domyślna wartość
+//        customerExercise.setRepetitions(0); // Domyślna wartość
+//        customerExercise = userExerciseRepository.save(customerExercise); // Zapisujemy ćwiczenie użytkownika
+//
+//        // Oblicz orderIndex na podstawie ilości przypisanych ćwiczeń
+//        int orderIndex = trainingPlan.getTrainingPlanExercises().size() + 1;
+//
+//        // Stwórz nowe powiązanie ćwiczenia z planem
+//        TrainingPlanExercise trainingPlanExercise = new TrainingPlanExercise();
+//        trainingPlanExercise.setTrainingPlan(trainingPlan);
+//        trainingPlanExercise.setCustomerExercise(customerExercise);
+//        trainingPlanExercise.setOrderIndex(orderIndex);
+//
+//        // Dodaj powiązanie do planu i zapisz
+//        trainingPlan.getTrainingPlanExercises().add(trainingPlanExercise);
+//        trainingPlanRepository.save(trainingPlan);
     }
 
 

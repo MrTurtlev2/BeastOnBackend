@@ -6,8 +6,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class AssignExerciseDto {
-
     private Long exerciseId;
-    private int orderIndex;
-
+    private Double weight;
+    private Integer repetitions;
 }
