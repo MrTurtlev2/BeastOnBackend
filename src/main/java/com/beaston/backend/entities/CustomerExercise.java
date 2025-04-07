@@ -1,4 +1,5 @@
 package com.beaston.backend.entities;
+
 import jakarta.persistence.*;
 import lombok.*;
 
