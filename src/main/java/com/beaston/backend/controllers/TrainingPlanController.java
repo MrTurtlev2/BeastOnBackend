@@ -3,6 +3,7 @@ package com.beaston.backend.controllers;
 import com.beaston.backend.DTO.TrainingPlanDTO;
 import com.beaston.backend.DTO.TrainingPlanResponseDTO;
 import com.beaston.backend.DTO.exercises.AssignExerciseDto;
+import com.beaston.backend.DTO.plans.WeeklyPlanResponseDTO;
 import com.beaston.backend.entities.*;
 import com.beaston.backend.repositories.CustomerExerciseRepository;
 import com.beaston.backend.repositories.CustomerRepository;
@@ -55,6 +56,13 @@ public class TrainingPlanController {
         Long customerId = customerService.getAuthenticatedCustomerId();
         List<TrainingPlanResponseDTO> plans = trainingPlanService.getTrainingPlansByCustomerId(customerId);
         return ResponseEntity.ok(plans);
+    }
+
+    @GetMapping("/weekly-schedule")
+    public ResponseEntity<List<WeeklyPlanResponseDTO>> getWeeklySchedule() {
+        Long customerId = customerService.getAuthenticatedCustomerId();
+        List<WeeklyPlanResponseDTO> weeklySchedule = trainingPlanService.getWeeklySchedule(customerId);
+        return ResponseEntity.ok(weeklySchedule);
     }
 
 

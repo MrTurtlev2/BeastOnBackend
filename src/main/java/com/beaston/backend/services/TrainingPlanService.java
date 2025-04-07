@@ -3,6 +3,8 @@ package com.beaston.backend.services;
 import com.beaston.backend.DTO.TrainingPlanDTO;
 import com.beaston.backend.DTO.TrainingPlanResponseDTO;
 import com.beaston.backend.DTO.TrainingScheduleDTO;
+import com.beaston.backend.DTO.plans.ExerciseDetailDTO;
+import com.beaston.backend.DTO.plans.WeeklyPlanResponseDTO;
 import com.beaston.backend.entities.Customer;
 import com.beaston.backend.entities.TrainingPlan;
 import com.beaston.backend.entities.TrainingSchedule;
@@ -82,6 +84,35 @@ public class TrainingPlanService {
 
         response.setTrainingSchedules(scheduleDTOs);
         return response;
+    }
+
+    public List<WeeklyPlanResponseDTO> getWeeklySchedule(Long customerId) {
+        List<TrainingPlan> trainingPlans = trainingPlanRepository.findByCustomerId(customerId);
+
+        return trainingPlans.stream()
+                .flatMap(plan -> plan.getTrainingSchedules().stream().map(schedule -> {
+                    WeeklyPlanResponseDTO dto = new WeeklyPlanResponseDTO();
+//                    dto.setDayOfWeek(schedule.getDayOfWeek());
+                    dto.setDayOfWeek("day of week test");
+                    dto.setTrainingPlanId(plan.getId());
+                    dto.setTrainingPlanName(plan.getName());
+
+                    List<ExerciseDetailDTO> exerciseDetails = plan.getTrainingPlanExercises().stream()
+                            .map(tpe -> {
+                                ExerciseDetailDTO exerciseDto = new ExerciseDetailDTO();
+                                exerciseDto.setExerciseId(tpe.getCustomerExercise().getExercise().getId());
+                                exerciseDto.setExerciseName(tpe.getCustomerExercise().getExercise().getName());
+//                                exerciseDto.setWeight(tpe.getCustomerExercise().getWeight());
+                                exerciseDto.setWeight(20);
+                                exerciseDto.setRepetitions(tpe.getCustomerExercise().getRepetitions());
+                                return exerciseDto;
+                            })
+                            .collect(Collectors.toList());
+
+                    dto.setExercises(exerciseDetails);
+                    return dto;
+                }))
+                .collect(Collectors.toList());
     }
 
 

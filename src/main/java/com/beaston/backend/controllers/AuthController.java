@@ -138,6 +138,7 @@ public class AuthController {
             return ResponseEntity.ok(response);
 
         } catch (Exception ex) {
+            System.out.println(ex);
             ApiErrorResponseDto response = new ApiErrorResponseDto(
                     "Błąd serwera przy logowaniu",
                     ErrorTypeEnum.SERVER_ERROR,
