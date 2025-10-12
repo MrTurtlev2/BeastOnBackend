@@ -8,7 +8,7 @@ import java.util.List;
 @Getter
 @Setter
 public class WeeklyPlanResponseDTO {
-    private String dayOfWeek;
+    private int dayOfWeek;
     private Long trainingPlanId;
     private String trainingPlanName;
     private List<ExerciseDetailDTO> exercises;

@@ -92,8 +92,7 @@ public class TrainingPlanService {
         return trainingPlans.stream()
                 .flatMap(plan -> plan.getTrainingSchedules().stream().map(schedule -> {
                     WeeklyPlanResponseDTO dto = new WeeklyPlanResponseDTO();
-//                    dto.setDayOfWeek(schedule.getDayOfWeek());
-                    dto.setDayOfWeek("day of week test");
+                    dto.setDayOfWeek(schedule.getDayOfWeek());
                     dto.setTrainingPlanId(plan.getId());
                     dto.setTrainingPlanName(plan.getName());
 
