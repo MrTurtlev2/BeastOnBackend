@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
@@ -123,19 +124,35 @@ public class AuthController {
         }
 
         try {
+            Customer customer = customerRepository.findByCustomerName(loginDto.getCustomerName());
+            if (customer == null) {
+                ApiErrorResponseDto response = new ApiErrorResponseDto(
+                        "Nieprawidłowy login lub hasło",
+                        ErrorTypeEnum.AUTH_ERROR,
+                        HttpStatus.UNAUTHORIZED.value()
+                );
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             loginDto.getCustomerName(),
                             loginDto.getPassword()
                     )
             );
-            Customer customer = customerRepository.findByCustomerName(loginDto.getCustomerName());
+
             String jwtToken = createJwtToken(customer);
             var response = new HashMap<String, Object>();
             response.put("token", jwtToken);
             response.put("user", customer);
 
             return ResponseEntity.ok(response);
+        } catch (BadCredentialsException ex) {
+            ApiErrorResponseDto response = new ApiErrorResponseDto(
+                    "Nieprawidłowy login lub hasło",
+                    ErrorTypeEnum.AUTH_ERROR,
+                    HttpStatus.UNAUTHORIZED.value()
+            );
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
 
         } catch (Exception ex) {
             System.out.println(ex);
