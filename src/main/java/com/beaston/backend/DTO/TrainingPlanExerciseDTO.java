@@ -5,12 +5,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ExerciseSetDTO {
-    private Double weight;
-    private Integer repetitions;
-    private Integer setNumber;
+public class TrainingPlanExerciseDTO {
+    private String exerciseName;
+    private Integer orderIndex;
+    private List<ExerciseSetDTO> sets;
 }

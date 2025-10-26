@@ -1,14 +1,19 @@
 package com.beaston.backend.DTO;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-@Getter
-@Setter
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class TrainingPlanResponseDTO {
     private Long id;
     private String name;
-    private List<TrainingScheduleDTO> trainingSchedules;
+    private List<Integer> daysOfWeek;
+    private List<TrainingPlanExerciseDTO> exercises;
 }

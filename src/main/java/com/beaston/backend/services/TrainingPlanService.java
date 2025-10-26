@@ -1,30 +1,25 @@
 package com.beaston.backend.services;
 
-import com.beaston.backend.DTO.ExerciseDTO;
-import com.beaston.backend.DTO.ExerciseSetDTO;
-import com.beaston.backend.DTO.TrainingPlanDTO;
+import com.beaston.backend.DTO.*;
 import com.beaston.backend.entities.*;
-import com.beaston.backend.repositories.*;
+import com.beaston.backend.repositories.CustomerRepository;
+import com.beaston.backend.repositories.TrainingPlanRepository;
+import com.beaston.backend.repositories.TrainingScheduleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class TrainingPlanService {
 
     @Autowired
-    private CustomerRepository customerRepository;
-
-    @Autowired
     private TrainingPlanRepository trainingPlanRepository;
 
     @Autowired
-    private TrainingPlanExerciseRepository trainingPlanExerciseRepository;
-
-    @Autowired
-    private ExerciseSetRepository exerciseSetRepository;
+    private CustomerRepository customerRepository;
 
     @Autowired
     private TrainingScheduleRepository trainingScheduleRepository;
@@ -32,7 +27,6 @@ public class TrainingPlanService {
     @Autowired
     private CustomerService customerService;
 
-    // ----------------- PLANY -----------------
     @Transactional
     public TrainingPlan createPlan(TrainingPlanDTO dto) {
         Long customerId = customerService.getAuthenticatedCustomerId();
@@ -43,9 +37,6 @@ public class TrainingPlanService {
         plan.setCustomer(customer);
         plan.setName(dto.getName());
 
-        plan = trainingPlanRepository.save(plan);
-
-        // Harmonogram dni
         if (dto.getDaysOfWeek() != null) {
             for (Integer day : dto.getDaysOfWeek()) {
                 TrainingSchedule schedule = new TrainingSchedule();
@@ -55,17 +46,14 @@ public class TrainingPlanService {
             }
         }
 
-        // Ćwiczenia i serie
         if (dto.getExercises() != null) {
             int orderIndex = 1;
             for (ExerciseDTO exDto : dto.getExercises()) {
                 TrainingPlanExercise tpe = new TrainingPlanExercise();
                 tpe.setTrainingPlan(plan);
-                tpe.setOrderIndex(orderIndex++);
                 tpe.setExerciseName(exDto.getName());
-                plan.getTrainingPlanExercises().add(tpe);
+                tpe.setOrderIndex(orderIndex++);
 
-                // Serie
                 if (exDto.getSets() != null) {
                     int setIndex = 1;
                     for (ExerciseSetDTO setDto : exDto.getSets()) {
@@ -77,104 +65,39 @@ public class TrainingPlanService {
                         tpe.getSets().add(set);
                     }
                 }
+
+                plan.getTrainingPlanExercises().add(tpe);
             }
         }
 
         return trainingPlanRepository.save(plan);
     }
 
-    public List<TrainingPlan> getMyPlans() {
-        Long customerId = customerService.getAuthenticatedCustomerId();
-        return trainingPlanRepository.findByCustomerId(customerId);
-    }
+    public List<WeeklyPlanResponseDTO> getWeeklySchedule(Long customerId) {
+        List<TrainingPlan> plans = trainingPlanRepository.findByCustomerId(customerId);
 
-    @Transactional
-    public void deletePlan(Long planId) {
-        TrainingPlan plan = trainingPlanRepository.findById(planId)
-                .orElseThrow(() -> new RuntimeException("Plan not found"));
-        trainingPlanRepository.delete(plan);
-    }
+        return plans.stream()
+                .flatMap(plan -> plan.getTrainingSchedules().stream().map(schedule -> {
+                    WeeklyPlanResponseDTO dto = new WeeklyPlanResponseDTO();
+                    dto.setTrainingPlanId(plan.getId());
+                    dto.setTrainingPlanName(plan.getName());
+                    dto.setDayOfWeek(schedule.getDayOfWeek());
 
-    // ----------------- ĆWICZENIA -----------------
-    @Transactional
-    public TrainingPlanExercise addExercise(Long planId, ExerciseDTO dto) {
-        TrainingPlan plan = trainingPlanRepository.findById(planId)
-                .orElseThrow(() -> new RuntimeException("Plan not found"));
+                    List<ExerciseDetailDTO> exerciseDetails = plan.getTrainingPlanExercises().stream().map(tpe -> {
+                        ExerciseDetailDTO exDto = new ExerciseDetailDTO();
+                        exDto.setExerciseName(tpe.getExerciseName());
+                        exDto.setSets(tpe.getSets().stream().map(set -> {
+                            ExerciseSetDTO setDto = new ExerciseSetDTO();
+                            setDto.setWeight(set.getWeight());
+                            setDto.setRepetitions(set.getRepetitions());
+                            return setDto;
+                        }).collect(Collectors.toList()));
+                        return exDto;
+                    }).collect(Collectors.toList());
 
-        int orderIndex = plan.getTrainingPlanExercises().size() + 1;
-        TrainingPlanExercise tpe = new TrainingPlanExercise();
-        tpe.setTrainingPlan(plan);
-        tpe.setOrderIndex(orderIndex);
-        tpe.setExerciseName(dto.getName());
-        plan.getTrainingPlanExercises().add(tpe);
-
-        // Serie
-        if (dto.getSets() != null) {
-            int setIndex = 1;
-            for (ExerciseSetDTO setDto : dto.getSets()) {
-                ExerciseSet set = new ExerciseSet();
-                set.setTrainingPlanExercise(tpe);
-                set.setWeight(setDto.getWeight());
-                set.setRepetitions(setDto.getRepetitions());
-                set.setSetNumber(setIndex++);
-                tpe.getSets().add(set);
-            }
-        }
-
-        trainingPlanRepository.save(plan);
-        return tpe;
-    }
-
-    @Transactional
-    public void deleteExercise(Long exerciseId) {
-        TrainingPlanExercise tpe = trainingPlanExerciseRepository.findById(exerciseId)
-                .orElseThrow(() -> new RuntimeException("Exercise not found"));
-        trainingPlanExerciseRepository.delete(tpe);
-    }
-
-    @Transactional
-    public TrainingPlanExercise updateExercise(Long exerciseId, ExerciseDTO dto) {
-        TrainingPlanExercise tpe = trainingPlanExerciseRepository.findById(exerciseId)
-                .orElseThrow(() -> new RuntimeException("Exercise not found"));
-
-        tpe.setExerciseName(dto.getName());
-        // opcjonalnie możesz też zaktualizować orderIndex, jeśli przesuwasz ćwiczenia
-        return trainingPlanExerciseRepository.save(tpe);
-    }
-
-    // ----------------- SERIE -----------------
-    @Transactional
-    public ExerciseSet addSet(Long exerciseId, ExerciseSetDTO dto) {
-        TrainingPlanExercise tpe = trainingPlanExerciseRepository.findById(exerciseId)
-                .orElseThrow(() -> new RuntimeException("Exercise not found"));
-
-        int setNumber = tpe.getSets().size() + 1;
-        ExerciseSet set = new ExerciseSet();
-        set.setTrainingPlanExercise(tpe);
-        set.setWeight(dto.getWeight());
-        set.setRepetitions(dto.getRepetitions());
-        set.setSetNumber(setNumber);
-
-        tpe.getSets().add(set);
-        trainingPlanExerciseRepository.save(tpe);
-
-        return set;
-    }
-
-    @Transactional
-    public void deleteSet(Long setId) {
-        ExerciseSet set = exerciseSetRepository.findById(setId)
-                .orElseThrow(() -> new RuntimeException("Set not found"));
-        exerciseSetRepository.delete(set);
-    }
-
-    @Transactional
-    public ExerciseSet updateSet(Long setId, ExerciseSetDTO dto) {
-        ExerciseSet set = exerciseSetRepository.findById(setId)
-                .orElseThrow(() -> new RuntimeException("Set not found"));
-
-        set.setWeight(dto.getWeight());
-        set.setRepetitions(dto.getRepetitions());
-        return exerciseSetRepository.save(set);
+                    dto.setExercises(exerciseDetails);
+                    return dto;
+                }))
+                .collect(Collectors.toList());
     }
 }
