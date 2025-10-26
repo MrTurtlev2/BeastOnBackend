@@ -29,7 +29,5 @@ public class TrainingPlan {
     private List<TrainingPlanExercise> trainingPlanExercises = new ArrayList<>();
 
     @OneToMany(mappedBy = "trainingPlan", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<TrainingSchedule> trainingSchedules = new ArrayList<>(); // Lista harmonogramów
-
+    private List<TrainingSchedule> trainingSchedules = new ArrayList<>();
 }
-

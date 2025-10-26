@@ -5,8 +5,8 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class TrainingPlanDTO {
+public class ExerciseDTO {
     private String name;
-    private List<Integer> daysOfWeek;
-    private List<ExerciseDTO> exercises;
+    private Integer orderIndex;
+    private List<ExerciseSetDTO> sets;
 }

@@ -22,6 +22,5 @@ public class TrainingSchedule {
     private TrainingPlan trainingPlan;
 
     @Column(nullable = false)
-    private Integer dayOfWeek; // 1 = monday, 7 = Sunday
+    private Integer dayOfWeek; // 1 = Monday ... 7 = Sunday
 }
-
