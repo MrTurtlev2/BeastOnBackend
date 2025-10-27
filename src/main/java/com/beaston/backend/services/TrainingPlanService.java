@@ -100,4 +100,43 @@ public class TrainingPlanService {
                 }))
                 .collect(Collectors.toList());
     }
+
+    @Transactional
+    public TrainingPlan addExerciseToPlan(Long planId, ExerciseDTO dto) {
+        TrainingPlan plan = trainingPlanRepository.findById(planId)
+                .orElseThrow(() -> new RuntimeException("Plan not found"));
+
+        TrainingPlanExercise tpe = new TrainingPlanExercise();
+        tpe.setTrainingPlan(plan);
+        tpe.setExerciseName(dto.getName());
+
+        if (dto.getOrderIndex() != null) {
+            tpe.setOrderIndex(dto.getOrderIndex());
+        } else {
+            int nextOrder = plan.getTrainingPlanExercises().size() + 1;
+            tpe.setOrderIndex(nextOrder);
+        }
+
+        if (dto.getSets() == null || dto.getSets().isEmpty()) {
+            ExerciseSet defaultSet = new ExerciseSet();
+            defaultSet.setTrainingPlanExercise(tpe);
+            defaultSet.setWeight(1.0);
+            defaultSet.setRepetitions(1);
+            defaultSet.setSetNumber(1);
+            tpe.getSets().add(defaultSet);
+        } else {
+            int setNumber = 1;
+            for (ExerciseSetDTO setDto : dto.getSets()) {
+                ExerciseSet set = new ExerciseSet();
+                set.setTrainingPlanExercise(tpe);
+                set.setWeight(setDto.getWeight());
+                set.setRepetitions(setDto.getRepetitions());
+                set.setSetNumber(setNumber++);
+                tpe.getSets().add(set);
+            }
+        }
+
+        plan.getTrainingPlanExercises().add(tpe);
+        return trainingPlanRepository.save(plan);
+    }
 }

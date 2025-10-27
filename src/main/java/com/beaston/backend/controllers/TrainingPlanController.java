@@ -1,7 +1,9 @@
 package com.beaston.backend.controllers;
 
+import com.beaston.backend.DTO.ExerciseDTO;
 import com.beaston.backend.DTO.TrainingPlanDTO;
 import com.beaston.backend.DTO.WeeklyPlanResponseDTO;
+import com.beaston.backend.entities.TrainingPlan;
 import com.beaston.backend.services.CustomerService;
 import com.beaston.backend.services.TrainingPlanService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,5 +32,15 @@ public class TrainingPlanController {
         Long customerId = customerService.getAuthenticatedCustomerId();
         return ResponseEntity.ok(trainingPlanService.getWeeklySchedule(customerId));
     }
+
+    @PostMapping("/add-exercise-to-plan/{planId}")
+    public ResponseEntity<TrainingPlan> addExerciseToPlan(
+            @PathVariable Long planId,
+            @RequestBody ExerciseDTO dto
+    ) {
+        TrainingPlan updatedPlan = trainingPlanService.addExerciseToPlan(planId, dto);
+        return ResponseEntity.ok(updatedPlan);
+    }
+
 
 }
