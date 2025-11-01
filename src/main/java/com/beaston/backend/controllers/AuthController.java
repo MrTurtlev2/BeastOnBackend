@@ -218,6 +218,7 @@ public class AuthController {
             String newAccessToken = createAccessToken(customer);
             Map<String, Object> response = new HashMap<>();
             response.put("accessToken", newAccessToken);
+            response.put("user", customer);
 
             return ResponseEntity.ok(response);
 
