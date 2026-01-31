@@ -15,17 +15,17 @@ public class Customer {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(nullable = false, unique = true)
+    
+    @Column(nullable = true)
     private String customerName;
 
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "varchar(20) default 'client'")
     private String role;
 
     @JsonIgnore
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String passwordHash;
 }

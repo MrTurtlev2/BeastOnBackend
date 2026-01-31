@@ -1,7 +1,7 @@
 
 Docker Cheat Sheet
 
-docker-compose down -v
+docker-compose down -v // "-v" indicates volumen removing
 
 docker-compose build
 

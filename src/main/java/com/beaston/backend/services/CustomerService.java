@@ -19,19 +19,18 @@ public class CustomerService implements UserDetailsService {
     private CustomerRepository customerRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Customer customer = customerRepository.findByCustomerName(username);
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        Customer customer = customerRepository.findByEmail(email);
 
-        if (customer != null) {
-            var springUser = User.withUsername(customer.getCustomerName())
-                    .password(customer.getPasswordHash())
-                    .roles(customer.getRole())
-                    .build();
-
-            return springUser;
+        if (customer == null) {
+            throw new UsernameNotFoundException("Użytkownik nie istnieje: " + email);
         }
+        var springUser = User.withUsername(customer.getEmail())
+                .password(customer.getPasswordHash())
+                .roles(customer.getRole())
+                .build();
 
-        return null;
+        return springUser;
     }
 
     public Long getAuthenticatedCustomerId() {

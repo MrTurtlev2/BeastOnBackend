@@ -8,7 +8,6 @@ import lombok.Data;
 @Data
 public class RegisterDto {
 
-    @NotBlank(message = "Imię nie może być puste")
     @Size(min = 2, max = 50, message = "Imię musi mieć od 2 do 50 znaków")
     private String customerName;
 

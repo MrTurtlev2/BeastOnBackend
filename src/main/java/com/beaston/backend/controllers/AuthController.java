@@ -67,17 +67,16 @@ public class AuthController {
             );
             return ResponseEntity.badRequest().body(response);
         }
+        if (registerDto.getPassword() == null) {
+            ApiErrorResponseDto response = new ApiErrorResponseDto(
+                    "Hasło jest puste",
+                    ErrorTypeEnum.BUSINESS_ERROR,
+                    HttpStatus.BAD_REQUEST.value()
+            );
+            return ResponseEntity.badRequest().body(response);
+        }
 
         try {
-            if (customerRepository.findByCustomerName(registerDto.getCustomerName()) != null) {
-                ApiErrorResponseDto response = new ApiErrorResponseDto(
-                        "Użytkownik o podanym loginie już istnieje",
-                        ErrorTypeEnum.BUSINESS_ERROR,
-                        HttpStatus.BAD_REQUEST.value()
-                );
-                return ResponseEntity.badRequest().body(response);
-            }
-
             if (customerRepository.findByEmail(registerDto.getEmail()) != null) {
                 ApiErrorResponseDto response = new ApiErrorResponseDto(
                         "Użytkownik o podanym e-mail już istnieje",
@@ -115,7 +114,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Object> login(@RequestBody LoginDto loginDto,
+    public ResponseEntity<Object> login(@Valid @RequestBody LoginDto loginDto,
                                         BindingResult result) {
         if (result.hasErrors()) {
             String errorMessage = result.getFieldErrors().stream()
@@ -131,8 +130,8 @@ public class AuthController {
         }
 
         try {
-            Customer customer = customerRepository.findByCustomerName(loginDto.getCustomerName());
-            if (customer == null) {
+            Customer customer = customerRepository.findByEmail(loginDto.getEmail());
+            if (customer == null || customer.getPasswordHash() == null) {
                 ApiErrorResponseDto response = new ApiErrorResponseDto(
                         "Nieprawidłowy login lub hasło",
                         ErrorTypeEnum.AUTH_ERROR,
@@ -143,7 +142,7 @@ public class AuthController {
 
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
-                            loginDto.getCustomerName(),
+                            loginDto.getEmail(),
                             loginDto.getPassword()
                     )
             );
@@ -168,7 +167,8 @@ public class AuthController {
 
         } catch (Exception ex) {
             ApiErrorResponseDto response = new ApiErrorResponseDto(
-                    "Błąd serwera przy logowaniu",
+                    ex.toString(),
+//                    "Błąd serwera przy logowaniu",
                     ErrorTypeEnum.SERVER_ERROR,
                     HttpStatus.INTERNAL_SERVER_ERROR.value()
             );
@@ -205,7 +205,7 @@ public class AuthController {
             }
 
             String username = jwt.getSubject();
-            Customer customer = customerRepository.findByCustomerName(username);
+            Customer customer = customerRepository.findByEmail(username);
             if (customer == null) {
                 ApiErrorResponseDto response = new ApiErrorResponseDto(
                         "Użytkownik nie istnieje",
@@ -238,7 +238,7 @@ public class AuthController {
                 .issuer(jwtIssuer)
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(ACCESS_TOKEN_EXP))
-                .subject(customer.getCustomerName())
+                .subject(customer.getEmail())
                 .claim("id", customer.getId())
                 .claim("role", customer.getRole())
                 .claim("type", "access")
@@ -255,7 +255,7 @@ public class AuthController {
                 .issuer(jwtIssuer)
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(REFRESH_TOKEN_EXP))
-                .subject(customer.getCustomerName())
+                .subject(customer.getEmail())
                 .claim("type", "refresh")
                 .build();
 
