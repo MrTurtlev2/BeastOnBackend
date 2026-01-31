@@ -11,9 +11,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TrainingPlanResponseDTO {
-    private Long id;
-    private String name;
-    private List<Integer> daysOfWeek;
-    private List<TrainingPlanExerciseDTO> exercises;
+public class TrainingPlanExerciseDTO {
+    private String exerciseName;
+    private Integer orderIndex;
+    private List<ExerciseSetDTO> sets;
 }

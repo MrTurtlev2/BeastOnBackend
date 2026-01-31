@@ -1,15 +1,13 @@
-package com.beaston.backend.DTO.plans;
+package com.beaston.backend.DTO;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
 import java.util.List;
 
-@Getter
-@Setter
+@Data
 public class WeeklyPlanResponseDTO {
-    private int dayOfWeek;
     private Long trainingPlanId;
     private String trainingPlanName;
+    private Integer dayOfWeek;
     private List<ExerciseDetailDTO> exercises;
 }

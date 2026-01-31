@@ -1,28 +1,27 @@
 package com.beaston.backend.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "customers_exercises")
+@Table(name = "exercise_sets")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CustomerExercise {
+public class ExerciseSet {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "customer_id", nullable = false)
-    private Customer customer;
-
-    @ManyToOne
-    @JoinColumn(name = "exercise_id", nullable = false)
-    private Exercise exercise;
-
     private Double weight;
     private Integer repetitions;
+    private Integer setNumber;
+
+    @ManyToOne
+    @JoinColumn(name = "training_plan_exercise_id", nullable = false)
+    @JsonIgnore
+    private TrainingPlanExercise trainingPlanExercise;
 }
