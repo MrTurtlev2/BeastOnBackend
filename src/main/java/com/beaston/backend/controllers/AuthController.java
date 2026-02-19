@@ -34,8 +34,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.Instant;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -52,6 +53,9 @@ public class AuthController {
     @Value("${google.client.id}")
     private String GOOGLE_CLIENT_ID;
 
+    @Value("${google.android.client.id}")
+    private String GOOGLE_ANDROID_CLIENT_ID;
+
     @Autowired
     private CustomerRepository customerRepository;
 
@@ -67,10 +71,11 @@ public class AuthController {
     @SuppressWarnings("ReassignedVariable")
     @PostMapping("/google-login")
     public ResponseEntity<Object> loginByGoogle(@Valid @RequestBody GoogleLoginDto googleLoginDto) {
-
+        // todo: add client name and rest from google auth provider
         try {
+            List<String> trustedClients = Arrays.asList(GOOGLE_CLIENT_ID, GOOGLE_ANDROID_CLIENT_ID);
             GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new JacksonFactory())
-                    .setAudience(Collections.singletonList(GOOGLE_CLIENT_ID))
+                    .setAudience(trustedClients)
                     .build();
 
             GoogleIdToken idToken = verifier.verify(googleLoginDto.getIdToken());
@@ -111,7 +116,7 @@ public class AuthController {
                 customer.setAuthProvider(AuthProviderEnum.LOCAL_PROVIDER);
                 customerRepository.save(customer);
             }
-            
+
             String accessToken = createAccessToken(customer);
             String refreshToken = createRefreshToken(customer);
 
