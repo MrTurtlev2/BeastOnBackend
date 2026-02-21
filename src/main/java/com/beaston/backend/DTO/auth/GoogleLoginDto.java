@@ -10,4 +10,5 @@ public class GoogleLoginDto {
 
     @NotBlank(message = "brak provider id")
     private String idToken;
+
 }

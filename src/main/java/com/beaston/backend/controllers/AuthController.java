@@ -71,7 +71,6 @@ public class AuthController {
     @SuppressWarnings("ReassignedVariable")
     @PostMapping("/google-login")
     public ResponseEntity<Object> loginByGoogle(@Valid @RequestBody GoogleLoginDto googleLoginDto) {
-        // todo: add client name and rest from google auth provider
         try {
             List<String> trustedClients = Arrays.asList(GOOGLE_CLIENT_ID, GOOGLE_ANDROID_CLIENT_ID);
             GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new JacksonFactory())
@@ -91,7 +90,7 @@ public class AuthController {
             GoogleIdToken.Payload payload = idToken.getPayload();
             String email = payload.getEmail();
             boolean emailVerified = Boolean.TRUE.equals(payload.getEmailVerified());
-            String name = (String) payload.get("name");
+            String name = (String) payload.get("given_name");
 
             if (!emailVerified) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
