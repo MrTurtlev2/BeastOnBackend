@@ -15,9 +15,6 @@ public class RegisterDto {
     @Email(message = "Niepoprawny format email")
     private String email;
 
-    @NotBlank(message = "Rola nie może być pusta")
-    private String role;
-
     @NotBlank(message = "Hasło nie może być puste")
     @Size(min = 8, message = "Hasło musi mieć co najmniej 8 znaków")
     private String password;
