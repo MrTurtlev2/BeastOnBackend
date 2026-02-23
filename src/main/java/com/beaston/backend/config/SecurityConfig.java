@@ -34,6 +34,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/register").permitAll()
                         .requestMatchers("/api/auth/login").permitAll()
                         .requestMatchers("/api/auth/refresh-token").permitAll()
+                        .requestMatchers("/api/auth/google-login").permitAll()
                         .anyRequest().authenticated()
                 ).oauth2ResourceServer(oauth2 -> oauth2.jwt((Customizer.withDefaults())))
                 .sessionManagement(session -> session.sessionCreationPolicy(

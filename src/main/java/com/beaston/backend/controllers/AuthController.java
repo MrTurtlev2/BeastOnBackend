@@ -1,11 +1,17 @@
 package com.beaston.backend.controllers;
 
 import com.beaston.backend.DTO.api.ApiErrorResponseDto;
+import com.beaston.backend.DTO.auth.GoogleLoginDto;
 import com.beaston.backend.DTO.auth.LoginDto;
 import com.beaston.backend.DTO.auth.RegisterDto;
 import com.beaston.backend.entities.Customer;
+import com.beaston.backend.enums.AuthProviderEnum;
 import com.beaston.backend.enums.ErrorTypeEnum;
 import com.beaston.backend.repositories.CustomerRepository;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,8 +31,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -40,6 +50,12 @@ public class AuthController {
     @Value("${JWT_REFRESH_TOKEN_EXP}")
     private long REFRESH_TOKEN_EXP;
 
+    @Value("${google.client.id}")
+    private String GOOGLE_CLIENT_ID;
+
+    @Value("${google.android.client.id}")
+    private String GOOGLE_ANDROID_CLIENT_ID;
+
     @Autowired
     private CustomerRepository customerRepository;
 
@@ -51,6 +67,75 @@ public class AuthController {
 
     @Value("${SPRING_JWT_ISSUER}")
     private String jwtIssuer;
+
+    @SuppressWarnings("ReassignedVariable")
+    @PostMapping("/google-login")
+    public ResponseEntity<Object> loginByGoogle(@Valid @RequestBody GoogleLoginDto googleLoginDto) {
+        try {
+            List<String> trustedClients = Arrays.asList(GOOGLE_CLIENT_ID, GOOGLE_ANDROID_CLIENT_ID);
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new JacksonFactory())
+                    .setAudience(trustedClients)
+                    .build();
+
+            GoogleIdToken idToken = verifier.verify(googleLoginDto.getIdToken());
+            if (idToken == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiErrorResponseDto(
+                                "Nieprawidłowy token Google",
+                                ErrorTypeEnum.AUTH_ERROR,
+                                HttpStatus.UNAUTHORIZED.value()
+                        ));
+            }
+
+            GoogleIdToken.Payload payload = idToken.getPayload();
+            String email = payload.getEmail();
+            boolean emailVerified = Boolean.TRUE.equals(payload.getEmailVerified());
+            String name = (String) payload.get("given_name");
+
+            if (!emailVerified) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiErrorResponseDto(
+                                "Email niezweryfikowany przez Google",
+                                ErrorTypeEnum.AUTH_ERROR,
+                                HttpStatus.UNAUTHORIZED.value()
+                        ));
+            }
+
+            Customer customer = customerRepository.findByEmail(email);
+
+            if (customer == null) {
+                customer = new Customer();
+                customer.setCustomerName(name);
+                customer.setEmail(email);
+                customer.setRole("client");
+                customer.setPasswordHash(null);
+                customer.setAuthProvider(AuthProviderEnum.PROVIDER);
+                customerRepository.save(customer);
+            } else if (customer.getAuthProvider() == AuthProviderEnum.LOCAL) {
+                customer.setAuthProvider(AuthProviderEnum.LOCAL_PROVIDER);
+                customerRepository.save(customer);
+            }
+
+            String accessToken = createAccessToken(customer);
+            String refreshToken = createRefreshToken(customer);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("accessToken", accessToken);
+            response.put("refreshToken", refreshToken);
+            response.put("user", customer);
+
+            return ResponseEntity.ok(response);
+
+        } catch (GeneralSecurityException | IOException e) {
+            ApiErrorResponseDto response = new ApiErrorResponseDto(
+                    "Błąd przy weryfikacji Google tokena: " + e.getMessage(),
+                    ErrorTypeEnum.AUTH_ERROR,
+                    HttpStatus.INTERNAL_SERVER_ERROR.value()
+            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
 
     @PostMapping("/register")
     public ResponseEntity<Object> register(@Valid @RequestBody RegisterDto registerDto,
@@ -67,17 +152,16 @@ public class AuthController {
             );
             return ResponseEntity.badRequest().body(response);
         }
+        if (registerDto.getPassword() == null) {
+            ApiErrorResponseDto response = new ApiErrorResponseDto(
+                    "Hasło jest puste",
+                    ErrorTypeEnum.BUSINESS_ERROR,
+                    HttpStatus.BAD_REQUEST.value()
+            );
+            return ResponseEntity.badRequest().body(response);
+        }
 
         try {
-            if (customerRepository.findByCustomerName(registerDto.getCustomerName()) != null) {
-                ApiErrorResponseDto response = new ApiErrorResponseDto(
-                        "Użytkownik o podanym loginie już istnieje",
-                        ErrorTypeEnum.BUSINESS_ERROR,
-                        HttpStatus.BAD_REQUEST.value()
-                );
-                return ResponseEntity.badRequest().body(response);
-            }
-
             if (customerRepository.findByEmail(registerDto.getEmail()) != null) {
                 ApiErrorResponseDto response = new ApiErrorResponseDto(
                         "Użytkownik o podanym e-mail już istnieje",
@@ -91,6 +175,7 @@ public class AuthController {
             customer.setCustomerName(registerDto.getCustomerName());
             customer.setEmail(registerDto.getEmail());
             customer.setRole("client");
+            customer.setAuthProvider(AuthProviderEnum.LOCAL);
             customer.setPasswordHash(new BCryptPasswordEncoder().encode(registerDto.getPassword()));
             customerRepository.save(customer);
 
@@ -115,7 +200,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Object> login(@RequestBody LoginDto loginDto,
+    public ResponseEntity<Object> login(@Valid @RequestBody LoginDto loginDto,
                                         BindingResult result) {
         if (result.hasErrors()) {
             String errorMessage = result.getFieldErrors().stream()
@@ -130,9 +215,11 @@ public class AuthController {
             return ResponseEntity.badRequest().body(response);
         }
 
+
         try {
-            Customer customer = customerRepository.findByCustomerName(loginDto.getCustomerName());
-            if (customer == null) {
+            Customer customer = customerRepository.findByEmail(loginDto.getEmail());
+
+            if (customer == null || customer.getPasswordHash() == null) {
                 ApiErrorResponseDto response = new ApiErrorResponseDto(
                         "Nieprawidłowy login lub hasło",
                         ErrorTypeEnum.AUTH_ERROR,
@@ -140,10 +227,18 @@ public class AuthController {
                 );
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
+            if (customer.getAuthProvider() == AuthProviderEnum.PROVIDER) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiErrorResponseDto(
+                                "To konto używa logowania zewnętrznego",
+                                ErrorTypeEnum.AUTH_ERROR,
+                                HttpStatus.UNAUTHORIZED.value()
+                        ));
+            }
 
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
-                            loginDto.getCustomerName(),
+                            loginDto.getEmail(),
                             loginDto.getPassword()
                     )
             );
@@ -168,7 +263,8 @@ public class AuthController {
 
         } catch (Exception ex) {
             ApiErrorResponseDto response = new ApiErrorResponseDto(
-                    "Błąd serwera przy logowaniu",
+                    ex.toString(),
+//                    "Błąd serwera przy logowaniu",
                     ErrorTypeEnum.SERVER_ERROR,
                     HttpStatus.INTERNAL_SERVER_ERROR.value()
             );
@@ -205,7 +301,7 @@ public class AuthController {
             }
 
             String username = jwt.getSubject();
-            Customer customer = customerRepository.findByCustomerName(username);
+            Customer customer = customerRepository.findByEmail(username);
             if (customer == null) {
                 ApiErrorResponseDto response = new ApiErrorResponseDto(
                         "Użytkownik nie istnieje",
@@ -238,10 +334,11 @@ public class AuthController {
                 .issuer(jwtIssuer)
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(ACCESS_TOKEN_EXP))
-                .subject(customer.getCustomerName())
+                .subject(customer.getEmail())
                 .claim("id", customer.getId())
                 .claim("role", customer.getRole())
                 .claim("type", "access")
+                .claim("authProvider", customer.getAuthProvider().name())
                 .build();
 
         var encoder = new NimbusJwtEncoder(new ImmutableSecret<>(jwtSecretKey.getBytes()));
@@ -255,7 +352,7 @@ public class AuthController {
                 .issuer(jwtIssuer)
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(REFRESH_TOKEN_EXP))
-                .subject(customer.getCustomerName())
+                .subject(customer.getEmail())
                 .claim("type", "refresh")
                 .build();
 
