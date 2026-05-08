@@ -9,7 +9,6 @@ import lombok.Setter;
 @AllArgsConstructor
 public class UserDetailsDto {
     private Long id;
-    private String customerName;
     private String email;
     private String role;
 }

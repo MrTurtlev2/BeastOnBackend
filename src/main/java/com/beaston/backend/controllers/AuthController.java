@@ -105,7 +105,6 @@ public class AuthController {
 
             if (customer == null) {
                 customer = new Customer();
-                customer.setCustomerName(name);
                 customer.setEmail(email);
                 customer.setRole("client");
                 customer.setPasswordHash(null);
@@ -172,7 +171,6 @@ public class AuthController {
             }
 
             Customer customer = new Customer();
-            customer.setCustomerName(registerDto.getCustomerName());
             customer.setEmail(registerDto.getEmail());
             customer.setRole("client");
             customer.setAuthProvider(AuthProviderEnum.LOCAL);

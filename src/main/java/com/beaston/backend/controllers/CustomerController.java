@@ -29,8 +29,9 @@ public class CustomerController {
         }
 
         String username = jwt.getSubject();
-        Customer customer = customerRepository.findByCustomerName(username);
-
+//        Customer customer = customerRepository.findByCustomerName(username);
+        Customer customer = customerRepository.findByEmail(username);
+ 
         if (customer == null) {
             ApiErrorResponseDto response = new ApiErrorResponseDto(
                     "Użytkownik nie znaleziony",
@@ -42,7 +43,6 @@ public class CustomerController {
 
         UserDetailsDto customerDetails = new UserDetailsDto(
                 customer.getId(),
-                customer.getCustomerName(),
                 customer.getEmail(),
                 customer.getRole()
         );
