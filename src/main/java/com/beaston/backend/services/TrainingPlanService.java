@@ -36,6 +36,8 @@ public class TrainingPlanService {
         TrainingPlan plan = new TrainingPlan();
         plan.setCustomer(customer);
         plan.setName(dto.getName());
+        plan.setUuid(dto.getUuid());
+        plan.setLastModified(dto.getLastModified());
 
         if (dto.getDaysOfWeek() != null) {
             for (Integer day : dto.getDaysOfWeek()) {
