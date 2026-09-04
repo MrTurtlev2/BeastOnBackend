@@ -6,8 +6,8 @@ import java.util.List;
 
 @Data
 public class WeeklyPlanResponseDTO {
-    private Long trainingPlanId;
+    private String uuid;
     private String trainingPlanName;
-    private Integer dayOfWeek;
+    private List<Integer> daysOfWeek;
     private List<ExerciseDetailDTO> exercises;
 }

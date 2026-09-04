@@ -26,13 +26,14 @@ public class TrainingPlanController {
     public ResponseEntity<?> createPlan(@RequestBody TrainingPlanDTO dto) {
         return ResponseEntity.ok(trainingPlanService.createPlan(dto));
     }
-
+    
     @GetMapping("/weekly-schedule")
     public ResponseEntity<List<WeeklyPlanResponseDTO>> getWeeklySchedule() {
         Long customerId = customerService.getAuthenticatedCustomerId();
         return ResponseEntity.ok(trainingPlanService.getWeeklySchedule(customerId));
     }
 
+    ///  not used anymore
     @PostMapping("/add-exercise-to-plan/{planId}")
     public ResponseEntity<TrainingPlan> addExerciseToPlan(
             @PathVariable Long planId,

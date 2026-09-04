@@ -79,11 +79,17 @@ public class TrainingPlanService {
         List<TrainingPlan> plans = trainingPlanRepository.findByCustomerId(customerId);
 
         return plans.stream()
-                .flatMap(plan -> plan.getTrainingSchedules().stream().map(schedule -> {
+                .map(plan -> {
+                    List<Integer> daysOfWeekForScheduleResponse =
+                            plan.getTrainingSchedules()
+                                    .stream()
+                                    .map(item -> item.getDayOfWeek())
+                                    .toList();
+
                     WeeklyPlanResponseDTO dto = new WeeklyPlanResponseDTO();
-                    dto.setTrainingPlanId(plan.getId());
+                    dto.setUuid(plan.getUuid());
                     dto.setTrainingPlanName(plan.getName());
-                    dto.setDayOfWeek(schedule.getDayOfWeek());
+                    dto.setDaysOfWeek(daysOfWeekForScheduleResponse);
 
                     List<ExerciseDetailDTO> exerciseDetails = plan.getTrainingPlanExercises().stream().map(tpe -> {
                         ExerciseDetailDTO exDto = new ExerciseDetailDTO();
@@ -99,7 +105,7 @@ public class TrainingPlanService {
 
                     dto.setExercises(exerciseDetails);
                     return dto;
-                }))
+                })
                 .collect(Collectors.toList());
     }
 

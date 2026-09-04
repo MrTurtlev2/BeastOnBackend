@@ -12,7 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class TrainingPlanResponseDTO {
-    private Long id;
+    private String uuid;
     private String name;
     private List<Integer> daysOfWeek;
     private List<TrainingPlanExerciseDTO> exercises;
