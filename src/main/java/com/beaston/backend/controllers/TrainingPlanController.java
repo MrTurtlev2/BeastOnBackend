@@ -1,9 +1,8 @@
 package com.beaston.backend.controllers;
 
-import com.beaston.backend.DTO.ExerciseDTO;
 import com.beaston.backend.DTO.TrainingPlanDTO;
 import com.beaston.backend.DTO.WeeklyPlanResponseDTO;
-import com.beaston.backend.entities.TrainingPlan;
+import com.beaston.backend.DTO.plans.AssignPlanToDayDTO;
 import com.beaston.backend.services.CustomerService;
 import com.beaston.backend.services.TrainingPlanService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +25,25 @@ public class TrainingPlanController {
     public ResponseEntity<?> createPlan(@RequestBody TrainingPlanDTO dto) {
         return ResponseEntity.ok(trainingPlanService.createPlan(dto));
     }
-    
+
+    @PostMapping("/assign-plan-to-day")
+    public ResponseEntity<Void> assignPlanToDay(@RequestBody AssignPlanToDayDTO dto) {
+        Long customerId = customerService.getAuthenticatedCustomerId();
+
+        trainingPlanService.assignPlanToDay(customerId, dto);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/remove-plan/{uuid}")
+    public ResponseEntity<Void> removePlan(@PathVariable String uuid) {
+        Long customerId = customerService.getAuthenticatedCustomerId();
+
+        trainingPlanService.removePlan(customerId, uuid);
+        
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/weekly-schedule")
     public ResponseEntity<List<WeeklyPlanResponseDTO>> getWeeklySchedule() {
         Long customerId = customerService.getAuthenticatedCustomerId();
@@ -34,14 +51,13 @@ public class TrainingPlanController {
     }
 
     ///  not used anymore
-    @PostMapping("/add-exercise-to-plan/{planId}")
-    public ResponseEntity<TrainingPlan> addExerciseToPlan(
-            @PathVariable Long planId,
-            @RequestBody ExerciseDTO dto
-    ) {
-        TrainingPlan updatedPlan = trainingPlanService.addExerciseToPlan(planId, dto);
-        return ResponseEntity.ok(updatedPlan);
-    }
-
+    //    @PostMapping("/add-exercise-to-plan/{planId}")
+    //    public ResponseEntity<TrainingPlan> addExerciseToPlan(
+    //            @PathVariable Long planId,
+    //            @RequestBody ExerciseDTO dto
+    //    ) {
+    //        TrainingPlan updatedPlan = trainingPlanService.addExerciseToPlan(planId, dto);
+    //        return ResponseEntity.ok(updatedPlan);
+    //    }
 
 }

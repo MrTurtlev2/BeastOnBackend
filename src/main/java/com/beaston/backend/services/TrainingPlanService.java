@@ -1,11 +1,14 @@
 package com.beaston.backend.services;
 
 import com.beaston.backend.DTO.*;
+import com.beaston.backend.DTO.plans.AssignPlanToDayDTO;
 import com.beaston.backend.entities.*;
 import com.beaston.backend.repositories.CustomerRepository;
 import com.beaston.backend.repositories.TrainingPlanRepository;
 import com.beaston.backend.repositories.TrainingScheduleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -109,42 +112,79 @@ public class TrainingPlanService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional
-    public TrainingPlan addExerciseToPlan(Long planId, ExerciseDTO dto) {
-        TrainingPlan plan = trainingPlanRepository.findById(planId)
+    public void removePlan(Long customerId, String uuid) {
+        List<TrainingPlan> plans = trainingPlanRepository.findByCustomerId(customerId);
+        TrainingPlan userPlan = plans.stream().filter(plan -> uuid.equals(plan.getUuid())).findFirst().orElseThrow(() -> new RuntimeException("Plan not found"));
+        if (userPlan != null) {
+            trainingPlanRepository.delete(userPlan);
+            return;
+        }
+        new ResponseEntity<>("Plan not found", null, HttpStatus.NOT_FOUND);
+    }
+
+    public void assignPlanToDay(Long customerId, AssignPlanToDayDTO dto) {
+
+        List<TrainingPlan> userPlans =
+                trainingPlanRepository.findByCustomerId(customerId);
+
+        TrainingPlan userPlan = userPlans.stream()
+                .filter(plan -> dto.getUuid().equals(plan.getUuid()))
+                .findFirst()
                 .orElseThrow(() -> new RuntimeException("Plan not found"));
 
-        TrainingPlanExercise tpe = new TrainingPlanExercise();
-        tpe.setTrainingPlan(plan);
-        tpe.setExerciseName(dto.getName());
+        List<TrainingSchedule> foundSchedules = trainingScheduleRepository.findByTrainingPlan(userPlan);
 
-        if (dto.getOrderIndex() != null) {
-            tpe.setOrderIndex(dto.getOrderIndex());
-        } else {
-            int nextOrder = plan.getTrainingPlanExercises().size() + 1;
-            tpe.setOrderIndex(nextOrder);
+        boolean alreadyAssigned = foundSchedules.stream()
+                .anyMatch(schedule -> schedule.getDayOfWeek().equals(dto.getDay()));
+
+        if (alreadyAssigned) {
+            throw new RuntimeException("Schedule already assigned");
         }
 
-        if (dto.getSets() == null || dto.getSets().isEmpty()) {
-            ExerciseSet defaultSet = new ExerciseSet();
-            defaultSet.setTrainingPlanExercise(tpe);
-            defaultSet.setWeight(1.0);
-            defaultSet.setRepetitions(1);
-            defaultSet.setSetNumber(1);
-            tpe.getSets().add(defaultSet);
-        } else {
-            int setNumber = 1;
-            for (ExerciseSetDTO setDto : dto.getSets()) {
-                ExerciseSet set = new ExerciseSet();
-                set.setTrainingPlanExercise(tpe);
-                set.setWeight(setDto.getWeight());
-                set.setRepetitions(setDto.getRepetitions());
-                set.setSetNumber(setNumber++);
-                tpe.getSets().add(set);
-            }
-        }
+        TrainingSchedule schedule = new TrainingSchedule();
+        schedule.setDayOfWeek(dto.getDay());
+        schedule.setTrainingPlan(userPlan);
 
-        plan.getTrainingPlanExercises().add(tpe);
-        return trainingPlanRepository.save(plan);
+        trainingScheduleRepository.save(schedule);
     }
+
+
+//    @Transactional
+//    public TrainingPlan addExerciseToPlan(Long planId, ExerciseDTO dto) {
+//        TrainingPlan plan = trainingPlanRepository.findById(planId)
+//                .orElseThrow(() -> new RuntimeException("Plan not found"));
+//
+//        TrainingPlanExercise tpe = new TrainingPlanExercise();
+//        tpe.setTrainingPlan(plan);
+//        tpe.setExerciseName(dto.getName());
+//
+//        if (dto.getOrderIndex() != null) {
+//            tpe.setOrderIndex(dto.getOrderIndex());
+//        } else {
+//            int nextOrder = plan.getTrainingPlanExercises().size() + 1;
+//            tpe.setOrderIndex(nextOrder);
+//        }
+//
+//        if (dto.getSets() == null || dto.getSets().isEmpty()) {
+//            ExerciseSet defaultSet = new ExerciseSet();
+//            defaultSet.setTrainingPlanExercise(tpe);
+//            defaultSet.setWeight(1.0);
+//            defaultSet.setRepetitions(1);
+//            defaultSet.setSetNumber(1);
+//            tpe.getSets().add(defaultSet);
+//        } else {
+//            int setNumber = 1;
+//            for (ExerciseSetDTO setDto : dto.getSets()) {
+//                ExerciseSet set = new ExerciseSet();
+//                set.setTrainingPlanExercise(tpe);
+//                set.setWeight(setDto.getWeight());
+//                set.setRepetitions(setDto.getRepetitions());
+//                set.setSetNumber(setNumber++);
+//                tpe.getSets().add(set);
+//            }
+//        }
+//
+//        plan.getTrainingPlanExercises().add(tpe);
+//        return trainingPlanRepository.save(plan);
+//    }
 }
