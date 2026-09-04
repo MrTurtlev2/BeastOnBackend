@@ -3,6 +3,7 @@ package com.beaston.backend.controllers;
 import com.beaston.backend.DTO.TrainingPlanDTO;
 import com.beaston.backend.DTO.WeeklyPlanResponseDTO;
 import com.beaston.backend.DTO.plans.AssignPlanToDayDTO;
+import com.beaston.backend.DTO.plans.UpdateTrainingPlanDTO;
 import com.beaston.backend.services.CustomerService;
 import com.beaston.backend.services.TrainingPlanService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,12 +36,24 @@ public class TrainingPlanController {
         return ResponseEntity.noContent().build();
     }
 
+    @PutMapping("/update-plan/{uuid}")
+    public ResponseEntity<Void> updatePlan(
+            @PathVariable String uuid,
+            @RequestBody UpdateTrainingPlanDTO dto
+    ) {
+        Long customerId = customerService.getAuthenticatedCustomerId();
+
+        trainingPlanService.updatePlan(customerId, uuid, dto);
+
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/remove-plan/{uuid}")
     public ResponseEntity<Void> removePlan(@PathVariable String uuid) {
         Long customerId = customerService.getAuthenticatedCustomerId();
 
         trainingPlanService.removePlan(customerId, uuid);
-        
+
         return ResponseEntity.noContent().build();
     }
 

@@ -2,6 +2,7 @@ package com.beaston.backend.services;
 
 import com.beaston.backend.DTO.*;
 import com.beaston.backend.DTO.plans.AssignPlanToDayDTO;
+import com.beaston.backend.DTO.plans.UpdateTrainingPlanDTO;
 import com.beaston.backend.entities.*;
 import com.beaston.backend.repositories.CustomerRepository;
 import com.beaston.backend.repositories.TrainingPlanRepository;
@@ -148,6 +149,25 @@ public class TrainingPlanService {
         trainingScheduleRepository.save(schedule);
     }
 
+    public void updatePlan(Long customerId, String uuid, UpdateTrainingPlanDTO dto) {
+        List<TrainingPlan> userPlans = trainingPlanRepository.findByCustomerId(customerId);
+        TrainingPlan userPlan = userPlans.stream().filter(plan -> uuid.equals(plan.getUuid())).findFirst().orElseThrow(() -> new RuntimeException("Plan not found"));
+
+        userPlan.setName(dto.getName());
+        userPlan.setLastModified(dto.getLastModified());
+
+        userPlan.getTrainingSchedules().clear();
+ 
+        for (Integer day : dto.getDaysOfWeek()) {
+            TrainingSchedule schedule = new TrainingSchedule();
+            schedule.setDayOfWeek(day);
+            schedule.setTrainingPlan(userPlan);
+
+            userPlan.getTrainingSchedules().add(schedule);
+        }
+
+        trainingPlanRepository.save(userPlan);
+    }
 
 //    @Transactional
 //    public TrainingPlan addExerciseToPlan(Long planId, ExerciseDTO dto) {
