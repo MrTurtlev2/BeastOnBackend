@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -149,15 +150,26 @@ public class TrainingPlanService {
         trainingScheduleRepository.save(schedule);
     }
 
+    @Transactional
     public void updatePlan(Long customerId, String uuid, UpdateTrainingPlanDTO dto) {
         List<TrainingPlan> userPlans = trainingPlanRepository.findByCustomerId(customerId);
-        TrainingPlan userPlan = userPlans.stream().filter(plan -> uuid.equals(plan.getUuid())).findFirst().orElseThrow(() -> new RuntimeException("Plan not found"));
 
+        List<TrainingPlan> plansWithConflictedDaysOfWeek = userPlans.stream().filter(plan -> !plan.getUuid().equals(uuid) && plan.getTrainingSchedules().stream().anyMatch(schedule ->
+                dto.getDaysOfWeek().contains(schedule.getDayOfWeek()))).toList();
+
+        List<TrainingSchedule> schedulesWithConflictedDays = new ArrayList<>();
+
+        plansWithConflictedDaysOfWeek.forEach(plan -> plan.getTrainingSchedules().stream().filter(schedule ->
+                dto.getDaysOfWeek().contains(schedule.getDayOfWeek())).forEach(matchingSchedule -> schedulesWithConflictedDays.add(matchingSchedule)));
+
+        schedulesWithConflictedDays.forEach(schedule -> trainingScheduleRepository.delete(schedule));
+
+
+        TrainingPlan userPlan = userPlans.stream().filter(plan -> uuid.equals(plan.getUuid())).findFirst().orElseThrow(() -> new RuntimeException("Plan not found"));
         userPlan.setName(dto.getName());
         userPlan.setLastModified(dto.getLastModified());
-
         userPlan.getTrainingSchedules().clear();
- 
+
         for (Integer day : dto.getDaysOfWeek()) {
             TrainingSchedule schedule = new TrainingSchedule();
             schedule.setDayOfWeek(day);
