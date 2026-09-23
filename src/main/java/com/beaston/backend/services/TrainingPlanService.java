@@ -162,6 +162,8 @@ public class TrainingPlanService {
         plansWithConflictedDaysOfWeek.forEach(plan -> plan.getTrainingSchedules().stream().filter(schedule ->
                 dto.getDaysOfWeek().contains(schedule.getDayOfWeek())).forEach(matchingSchedule -> schedulesWithConflictedDays.add(matchingSchedule)));
 
+        //Mental note: JPA obserwuje obiekty planów, dzięki orphanRemoval=true i usunięcie shedule z kolekcji z listy
+        // schedulesWithConflictedDays obserowowany obiekt przez JPA triggeruje zapytanie SQL
         schedulesWithConflictedDays.forEach(schedule -> schedule.getTrainingPlan().getTrainingSchedules().remove(schedule));
 
         TrainingPlan userPlan = userPlans.stream().filter(plan -> uuid.equals(plan.getUuid())).findFirst().orElseThrow(() -> new RuntimeException("Plan not found"));
