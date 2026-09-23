@@ -162,8 +162,7 @@ public class TrainingPlanService {
         plansWithConflictedDaysOfWeek.forEach(plan -> plan.getTrainingSchedules().stream().filter(schedule ->
                 dto.getDaysOfWeek().contains(schedule.getDayOfWeek())).forEach(matchingSchedule -> schedulesWithConflictedDays.add(matchingSchedule)));
 
-        schedulesWithConflictedDays.forEach(schedule -> trainingScheduleRepository.delete(schedule));
-
+        schedulesWithConflictedDays.forEach(schedule -> schedule.getTrainingPlan().getTrainingSchedules().remove(schedule));
 
         TrainingPlan userPlan = userPlans.stream().filter(plan -> uuid.equals(plan.getUuid())).findFirst().orElseThrow(() -> new RuntimeException("Plan not found"));
         userPlan.setName(dto.getName());

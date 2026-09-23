@@ -20,8 +20,9 @@ public class Customer {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false, columnDefinition = "varchar(20) default 'client'")
-    private String role;
+    @Column(nullable = false)
+    @Builder.Default
+    private String role = "client";
 
     @JsonIgnore
     @Column(nullable = true)
